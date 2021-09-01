@@ -26,6 +26,7 @@ const Adapter =  {
                 'Content-type': 'application/json',
                 'X-API-Token': apiToken,
                 'X-Hub-Signature': 'sha1=' + CryptoJS.HmacSHA1(payloadObj, appSecret).toString(CryptoJS.enc.Hex),
+                host: "appcenter.ms",
                 ...additionalHeaders
             },
             body: JSON.stringify(payloadObj)
@@ -71,7 +72,7 @@ const run = async (appcenterToken, companyName) => {
         const appsObj = await Adapter.getAllApps(companyName, appcenterToken)
         const apps = Utility.getAppInfoObject(appsObj)
         apps.forEach(async element => {
-            console.log(`Evaluating app ${element.displayName}`)
+            console.log(`Evaluating app ${element.displayName}`, typeof github.context.payload)
             try {
                 await Adapter.sendWebhookTo(element.appId, element.appSecret, github.context.payload, appcenterToken)
                 console.log(`Success in sending webhook for app ${element.displayName}`)
