@@ -1,0 +1,12 @@
+on: [push, create, delete, pull_request]
+jobs:
+  test_appcenter_webhooks:
+    runs-on: ubuntu-latest
+    name: A job to test the notifyAppcenterCompanyApps action
+    steps:
+      - name: Test appcenter webhooks
+        id: test-appcenter-webhooks
+        uses: 2hire/notify-appcenter-company-apps@v0.1
+        with:
+          appcenter-token: ${{ secrets.APPCENTER_TOKEN }}
+          company-name: 2hire

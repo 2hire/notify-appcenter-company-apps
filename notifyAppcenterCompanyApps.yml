@@ -1,0 +1,12 @@
+name: 'Notify Appcenter Company Apps'
+description: 'Notify all available apps under a company of code changes'
+inputs:
+  appcenter-token:
+    description: 'The appcenter user token, please use github actions secrets to store the token'
+    required: true
+  company-name:
+    description: 'The name of the company that owns the app to notify'
+    required: true
+runs:
+  using: 'node12'
+  main: 'index.js'
