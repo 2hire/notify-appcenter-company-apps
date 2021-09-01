@@ -70,11 +70,10 @@ const run = async (appcenterToken, companyName) => {
     try {
         const appsObj = await Adapter.getAllApps(companyName, appcenterToken)
         const apps = Utility.getAppInfoObject(appsObj)
-        const githubPayload = JSON.stringify(github.context.payload, undefined, 2)
         apps.forEach(async element => {
             console.log(`Evaluating app ${element.displayName}`)
             try {
-                await Adapter.sendWebhookTo(element.appId, element.appSecret, githubPayload, appcenterToken)
+                await Adapter.sendWebhookTo(element.appId, element.appSecret, github.context.payload, appcenterToken)
                 console.log(`Success in sending webhook for app ${element.displayName}`)
             } catch (error) {
                 console.warn(`Found an error while sending webhook for app ${element.displayName}, skipping`, error)
