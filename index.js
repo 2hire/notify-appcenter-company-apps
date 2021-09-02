@@ -2,43 +2,40 @@
 const core = require('@actions/core')
 const github = require('@actions/github')
 const fetch = require('node-fetch')
-const CryptoJS = require("crypto-js")
-
 
 const appcenterApiVersion = 'v0.1'
 
 const Adapter =  {
     /**
      * 
-     * @param {string} appId 
-     * @param {string} apiToken 
-     * @param {string} appSecret 
-     * @param {object} payloadObj 
-     * @param {object} additionalHeaders 
-     * @returns JSON response of the appcenter /hooks api
+     * @param {string} appName the name of the app
+     * @param {string} ownerName the name of the company that owns the app
+     * @param {string} branchName the name of the branch
+     * @param {object} params build params
+     * @param {string} apiToken api token
+     * @param {object} additionalHeaders additional headers to send
+     * @returns JSON response of the appcenter /builds api
      * @throws
      */
-    sendWebhookTo: async (appId, appSecret, payloadObj, apiToken, additionalHeaders = {}) => {
-        return fetch(`https://api.appcenter.ms/${appcenterApiVersion}/public/apps/${appId}/hooks`, {
+    buildApp: async (appName, ownerName, branchName, params, apiToken, additionalHeaders = {}) => {
+        return fetch(`https://api.appcenter.ms/${appcenterApiVersion}/apps/${ownerName}/${appName}/branches/${branchName}/builds`, {
             method: 'POST',
             headers: {
-                'Accept': 'application/json',
-                'Content-type': 'application/json',
-                'X-API-Token': apiToken,
-                'X-Hub-Signature': 'sha1=' + CryptoJS.HmacSHA1(payloadObj, appSecret).toString(CryptoJS.enc.Hex),
-                host: "appcenter.ms",
-                ...additionalHeaders
+              'Accept': 'application/json',
+              'Content-type': 'application/json',
+              'X-API-Token': apiToken,
+              ...additionalHeaders
             },
-            body: JSON.stringify(payloadObj)
+            body: JSON.stringify(params)
         }).then(async res => {
             const json = await res.json()
-            if (json.message) {throw json}
+            if (json.error) {throw json.error}
             return json
         })
     },
     /**
      * 
-     * @param {string} companyName 
+     * @param {string} companyName the company name
      * @returns JSON response of the appcenter /orgs/:companyName/apps api
      */
     getAllApps: async (companyName, apiToken) => {
@@ -60,9 +57,14 @@ const Adapter =  {
 const Utility = {
     getAppInfoObject: (serverObj) => {
         return serverObj.map(curr => {
-            return {appId: curr.id, appSecret: curr.app_secret, displayName: curr.display_name}
+            return {appName: curr.name, displayName: curr.display_name}
         })
-    }
+    },
+    getBranchName: (str) => {
+      const toArr = str.split("/");
+      toArr.splice(0,2);
+      return toArr.join('/');
+    },
 }
 
 
@@ -74,7 +76,13 @@ const run = async (appcenterToken, companyName) => {
         apps.forEach(async element => {
             console.log(`Evaluating app ${element.displayName}`)
             try {
-                const res = await Adapter.sendWebhookTo(element.appId, element.appSecret, github.context.payload, appcenterToken)
+                const res = await Adapter.buildApp(
+                  element.appName,
+                  companyName,
+                  encodeURIComponent(Utility.getBranchName(github.context.payload.ref)),
+                  {sourceVersion: github.context.payload.head_commit.id, debug: false},
+                  appcenterToken
+                )
                 console.log(`Success in sending webhook for app ${element.displayName}`, JSON.stringify(res))
             } catch (error) {
                 console.warn(`Found an error while sending webhook for app ${element.displayName}, skipping`, error)
