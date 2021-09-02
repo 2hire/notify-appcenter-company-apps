@@ -6,7 +6,7 @@ jobs:
     steps:
       - name: Test appcenter webhooks
         id: test-appcenter-webhooks
-        uses: 2hire/notify-appcenter-company-apps@v1.0.2
+        uses: 2hire/notify-appcenter-company-apps@v1.0.3
         with:
           appcenter-token: ${{ secrets.APPCENTER_TOKEN }}
           company-name: 2hire
