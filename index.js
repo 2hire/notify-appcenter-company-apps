@@ -83,9 +83,9 @@ const run = async (appcenterToken, companyName) => {
                   {sourceVersion: github.context.payload.head_commit.id, debug: false},
                   appcenterToken
                 )
-                console.log(`Success in sending webhook for app ${element.displayName}`, JSON.stringify(res))
+                console.log(`Success in sending build request for app ${element.displayName}`, JSON.stringify(res))
             } catch (error) {
-                console.warn(`Found an error while sending webhook for app ${element.displayName}, skipping`, error)
+                console.warn(`Found an error while sending build request for app ${element.displayName}, skipping`, error)
             }
         })
     } catch (error) {
