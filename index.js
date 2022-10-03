@@ -85,7 +85,7 @@ const run = async (appcenterToken, companyName) => {
 
     apps
       .filter(({ appName }) =>
-        branchName.startsWith(`${appName.replace(/(-ios|-android)/g, "")}/`)
+        branchName.startsWith(`${appName.replace(/-\w*$/g, "")}/`)
       )
       .forEach(async (element) => {
         console.log(`Evaluating app ${element.displayName}`);
