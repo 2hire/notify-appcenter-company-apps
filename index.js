@@ -69,46 +69,49 @@ const Adapter = {
 };
 
 const Utility = {
-  getAppInfoObject: (serverObj) => {
-    return serverObj.map((curr) => {
-      return { appName: curr.name, displayName: curr.display_name };
-    });
-  },
-  getBranchName: (str) => {
-    const toArr = str.split("/");
-    toArr.splice(0, 2);
-    return toArr.join("/");
-  },
+  getAppInfoObject: (serverObj) =>
+    serverObj.map((curr) => ({
+      appName: curr.name,
+      displayName: curr.display_name,
+    })),
+  getBranchName: (str) => str.split("/").slice(2).join("/"),
 };
 
 const run = async (appcenterToken, companyName) => {
   try {
     const appsObj = await Adapter.getAllApps(companyName, appcenterToken);
     const apps = Utility.getAppInfoObject(appsObj);
-    apps.forEach(async (element) => {
-      console.log(`Evaluating app ${element.displayName}`);
-      try {
-        const res = await Adapter.buildApp(
-          element.appName,
-          companyName,
-          encodeURIComponent(Utility.getBranchName(github.context.payload.ref)),
-          {
-            sourceVersion: github.context.payload.head_commit.id,
-            debug: false,
-          },
-          appcenterToken
-        );
-        console.log(
-          `Success in sending build request for app ${element.displayName}`,
-          JSON.stringify(res)
-        );
-      } catch (error) {
-        console.warn(
-          `Found an error while sending build request for app ${element.displayName}, skipping`,
-          error
-        );
-      }
-    });
+    const branchName = Utility.getBranchName(github.context.payload.ref);
+
+    apps
+      .filter(({ appName }) =>
+        branchName.startsWith(`${appName.replace(/-\w*$/g, "")}/`)
+      )
+      .forEach(async (element) => {
+        console.log(`Evaluating app ${element.displayName}`);
+
+        try {
+          const res = await Adapter.buildApp(
+            element.appName,
+            companyName,
+            encodeURIComponent(branchName),
+            {
+              sourceVersion: github.context.payload.head_commit.id,
+              debug: false,
+            },
+            appcenterToken
+          );
+          console.log(
+            `Success in sending build request for app ${element.displayName}`,
+            JSON.stringify(res)
+          );
+        } catch (error) {
+          console.warn(
+            `Found an error while sending build request for app ${element.displayName}, skipping`,
+            error
+          );
+        }
+      });
   } catch (error) {
     console.error("Failure in getting apps, aborting", error);
   }
